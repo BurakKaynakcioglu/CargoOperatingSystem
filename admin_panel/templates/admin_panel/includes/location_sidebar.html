@@ -1,0 +1,156 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'location_sidebar.css' %}">
+
+<div class="sidebar-container active" id="locationSidebar">
+    <div class="info-panel">
+        <div class="header-container">
+            <h3>Konumlar ({{ locations.count }})</h3>
+            <button id="addLocationBtn" class="btn-add-location" onclick="toggleAddMode()">+ Ekle</button>
+        </div>
+
+        {% if success_msg %}
+        <div class="alert success auto-dismiss"
+            style="margin-bottom: 10px; padding: 10px; border-radius: 4px; background: #d4edda; color: #155724; font-size: 13px;">
+            {{ success_msg }}
+        </div>
+        {% endif %}
+
+        <div class="location-list">
+            {% for location in locations %}
+            <div class="location-item"
+                onclick="focusLocation({{ location.latitude }}, {{ location.longitude }}, '{{ location.name }}')">
+                <div class="location-info">
+                    <strong>{{ location.name }}</strong><br>
+                    <small>{{ location.latitude }}, {{ location.longitude }}</small>
+                </div>
+                <form action="{% url 'admin_panel:admin_map' %}?panel=locations" method="POST" style="margin: 0;"
+                    onsubmit="return confirm('{{ location.name }} konumunu silmek istediğinize emin misiniz?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="delete_id" value="{{ location.id }}">
+                    {% if location.is_default %}
+                    <button type="button" class="btn-delete" disabled style="opacity: 0.3; cursor: not-allowed;"
+                        title="Varsayılan konum silinemez">
+                        <img src="{% static 'icons/trash.svg' %}" alt="Sil" width="16" height="16">
+                    </button>
+                    {% else %}
+                    <button type="submit" class="btn-delete" onclick="event.stopPropagation();" title="Sil">
+                        <img src="{% static 'icons/trash.svg' %}" alt="Sil" width="16" height="16">
+                    </button>
+                    {% endif %}
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div id="addLocationModal" class="modal-overlay">
+    <div class="modal-content">
+        <h4>Yeni Konum Ekle</h4>
+        <form id="addLocationForm" method="POST" action="{% url 'admin_panel:admin_map' %}?panel=locations">
+            {% csrf_token %}
+            <input type="hidden" id="newLat" name="latitude">
+            <input type="hidden" id="newLng" name="longitude">
+
+            <label for="locationName">Konum İsmi:</label>
+            <input type="text" id="locationName" name="name" required placeholder="Örn: Depo 1">
+
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-cancel" onclick="closeModal()">İptal</button>
+                <button type="submit" class="btn btn-save">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let isAddMode = false;
+    let locationMapClickHandler = null;
+    let modalClickHandler = null;
+
+    function initLocationSidebar(map, markers) {
+        const modal = document.getElementById('addLocationModal');
+
+        if (locationMapClickHandler) {
+            map.off('click', locationMapClickHandler);
+        }
+
+        locationMapClickHandler = function (e) {
+            if (!isAddMode) return;
+
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+
+            document.getElementById('newLat').value = lat;
+            document.getElementById('newLng').value = lng;
+
+            modal.style.display = 'flex';
+            document.getElementById('locationName').focus();
+
+            toggleAddMode();
+        };
+
+        map.on('click', locationMapClickHandler);
+
+        if (modalClickHandler) {
+            modal.removeEventListener('click', modalClickHandler);
+        }
+
+        modalClickHandler = function (e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        };
+        modal.addEventListener('click', modalClickHandler);
+    }
+
+    {% comment %} function destroyLocationSidebar(map) {
+        if (isAddMode) {
+            toggleAddMode();
+        }
+
+        if (locationMapClickHandler) {
+            map.off('click', locationMapClickHandler);
+            locationMapClickHandler = null;
+        }
+
+        const modal = document.getElementById('addLocationModal');
+        if (modalClickHandler && modal) {
+            modal.removeEventListener('click', modalClickHandler);
+            modalClickHandler = null;
+        }
+    } {% endcomment %}
+
+    function toggleAddMode() {
+        const addBtn = document.getElementById('addLocationBtn');
+        const mapContainer = document.getElementById('map');
+
+        isAddMode = !isAddMode;
+        if (isAddMode) {
+            addBtn.textContent = 'İptal';
+            addBtn.classList.add('active');
+            mapContainer.classList.add('crosshair-cursor');
+        } else {
+            addBtn.textContent = '+ Ekle';
+            addBtn.classList.remove('active');
+            mapContainer.classList.remove('crosshair-cursor');
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('addLocationModal');
+        modal.style.display = 'none';
+        document.getElementById('addLocationForm').reset();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const alerts = document.querySelectorAll('.auto-dismiss');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, 3000);
+        });
+    });
+</script>

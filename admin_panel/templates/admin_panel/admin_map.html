@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Konum Yönetimi</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'admin_map.css' %}">
+    <link rel="stylesheet" href="{% static 'admin_sidebar.css' %}">
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="map-nav-buttons">
+        <a href="{% url 'admin_panel:admin_map' %}?panel=locations" class="nav-btn {% if active_panel == 'locations' %}active{% endif %}" style="text-decoration: none; display: block;">Konumlar</a>
+        <a href="{% url 'admin_panel:admin_map' %}?panel=cargos&date={{ selected_date }}" class="nav-btn {% if active_panel == 'cargos' %}active{% endif %}" style="text-decoration: none; display: block;">Kargolar</a>
+        <a href="{% url 'admin_panel:admin_map' %}?panel=create_route&date={{ selected_date }}" class="nav-btn {% if active_panel == 'create_route' %}active{% endif %}" style="text-decoration: none; display: block;">Rota Oluştur</a>
+    </div>
+
+    {% if active_panel == 'locations' %}
+        {% include 'admin_panel/includes/location_sidebar.html' %}
+    {% elif active_panel == 'cargos' %}
+        {% include 'admin_panel/includes/cargo_sidebar.html' %}
+    {% elif active_panel == 'create_route' %}
+        {% include 'admin_panel/includes/create_route_sidebar.html' %}
+    {% endif %}
+
+    {% if routes %}
+        {{ routes|json_script:"routes-data" }}
+    {% endif %}
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        var map = L.map('map').setView([40.8, 29.9], 10);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18
+        }).addTo(map);
+        
+        var markers = {};
+        
+        {% for location in locations %}
+        var marker = L.marker([{{ location.latitude }}, {{ location.longitude }}])
+            .addTo(map)
+            .bindPopup('<strong>{{ location.name }}</strong><br>Lat: {{ location.latitude }}<br>Lon: {{ location.longitude }}');
+        
+        markers['{{ location.name }}'] = marker;
+        {% endfor %}
+
+        window.focusLocation = function(lat, lon, name) {
+            map.setView([lat, lon], 14);
+            if (markers[name]) {
+                markers[name].openPopup();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            {% if active_panel == 'locations' %}
+                if (typeof initLocationSidebar === 'function') {
+                    initLocationSidebar(map, markers);
+                }
+            {% endif %}
+
+            {% if routes %}
+                try {
+                    var routesDataElement = document.getElementById('routes-data');
+                    if (routesDataElement) {
+                        var routes = JSON.parse(routesDataElement.textContent);
+                        var allRoutesGroup = L.featureGroup();
+
+                        routes.forEach(function(route) {
+                            if (route.path && route.path.length > 0) {
+                                var polyline = L.polyline(route.path, {
+                                    color: route.color, 
+                                    weight: 5, 
+                                    opacity: 0.8,
+                                    lineJoin: 'round'
+                                });
+                                
+                                polyline.addTo(map);
+                                polyline.addTo(allRoutesGroup);
+                                
+                                polyline.bindPopup(
+                                    '<div style="text-align: center;">' +
+                                    '<strong>' + route.vehicle + '</strong><hr style="margin: 5px 0;">' +
+                                    'Mesafe: ' + route.distance + ' km<br>' +
+                                    'Maliyet: ' + route.cost + ' TL<br>' +
+                                    'Yük: ' + route.total_weight + ' kg' +
+                                    '</div>'
+                                );
+                            }
+
+                            if (route.stops) {
+                                route.stops.forEach(function(stop, index) {
+                                    var isStart = (index === 0);
+                                    var markerOptions = {
+                                        radius: isStart ? 9 : 6,
+                                        fillColor: isStart ? route.color : 'white',
+                                        color: route.color,
+                                        weight: 2,
+                                        opacity: 1,
+                                        fillOpacity: 1
+                                    };
+                                    
+                                    var tooltipText = route.vehicle + ' - ' + (isStart ? 'Başlangıç' : 'Durak ' + (index + 1));
+
+                                    L.circleMarker([stop.lat, stop.lon], markerOptions)
+                                        .addTo(map)
+                                        .bindTooltip(tooltipText, {permanent: false, direction: 'top'});
+                                });
+                            }
+                        });
+
+                        if (routes.length > 0 && allRoutesGroup.getLayers().length > 0) {
+                            map.fitBounds(allRoutesGroup.getBounds(), {padding: [50, 50]});
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error drawing routes:", e);
+                }
+            {% endif %}
+        });
+    </script>
+</body>
+</html>

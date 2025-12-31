@@ -1,0 +1,36 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'cargo_sidebar.css' %}">
+
+<div class="sidebar-container active" id="CargosSidebar">
+    <div class="info-panel">
+        <div class="header-container">
+            <h3>Kargo İstatistikleri</h3>
+        </div>
+        
+        <div class="filter-container">
+            <form method="GET" action="{% url 'admin_panel:admin_map' %}" id="cargoFilterForm">
+                <input type="hidden" name="panel" value="cargos">
+                <label for="dateFilter" class="filter-label">Tarih Filtresi:</label>
+                <div class="filter-input-group">
+                    <input type="date" id="dateFilter" name="date" value="{{ selected_date|default:'' }}" 
+                           class="filter-date-input">
+                    <button type="submit" class="btn-filter">
+                        Filtrele
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="location-list">
+            {% for location in locations %}
+            <div class="location-item" onclick="focusLocation({{ location.latitude }}, {{ location.longitude }}, '{{ location.name }}')">
+                <div class="location-info">
+                    <strong>{{ location.name }}</strong><br>
+                    <small>Kargo Sayısı: {{ location.cargo_count }}</small><br>
+                    <small>Toplam Ağırlık: {{ location.total_weight|default_if_none:"0" }} kg</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

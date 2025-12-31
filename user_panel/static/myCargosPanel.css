@@ -1,0 +1,60 @@
+.my-cargos-list {
+    margin-top: 0;
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.cargo-item-card {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.cargo-item-card:last-child {
+    margin-bottom: 0;
+}
+
+.cargo-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.cargo-header strong {
+    color: #333;
+}
+
+.cargo-date {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.cargo-details {
+    font-size: 0.9em;
+    color: #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-delete-cargo {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.btn-delete-cargo:hover {
+    opacity: 1;
+}
+
+.my-cargos-empty {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+}

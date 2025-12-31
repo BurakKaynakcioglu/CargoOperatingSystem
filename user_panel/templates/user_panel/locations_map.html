@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kocaeli Konumları</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'locations_map.css' %}">
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <div class="map-nav-buttons">
+        <a href="#" class="nav-btn active" onclick="switchPanel('sendCargoPanel'); return false;">Gönderim</a>
+        <a href="#" class="nav-btn" onclick="switchPanel('myCargosPanel'); return false;">Kargolarım</a>
+        <a href="#" class="nav-btn" onclick="switchPanel('routePanel'); return false;">Güzergah</a>
+    </div>
+
+    <div class="sidebar-container">
+        <div id="sendCargoPanel" style="display: block;">
+            {% include 'user_panel/includes/sendCargoPanel.html' %}
+        </div>
+        <div id="myCargosPanel" style="display: none;">
+            {% include 'user_panel/includes/myCargosPanel.html' %}
+        </div>
+        <div id="routePanel" style="display: none;">
+            {% include 'user_panel/includes/routePanel.html' %}
+        </div>
+
+        <div class="info-panel">
+            <h3>Konumlar ({{ locations.count }})</h3>
+            <div class="location-list">
+                {% for location in locations %}
+                <div class="location-item"
+                    onclick="focusLocation({{ location.latitude }}, {{ location.longitude }}, '{{ location.name }}')">
+                    <strong>{{ location.name }}</strong><br>
+                    <small>{{ location.latitude }}, {{ location.longitude }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    {{ my_routes|json_script:"my-routes-data" }}
+    {{ my_cargos_json|json_script:"my-cargos-data" }}
+    <script>
+        var map = L.map('map').setView([40.8, 29.9], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18
+        }).addTo(map);
+
+        var markers = {};
+
+        {% for location in locations %}
+        var marker = L.marker([{{ location.latitude }}, {{ location.longitude }}])
+            .addTo(map)
+            .bindPopup('<strong>{{ location.name }}</strong><br>Lat: {{ location.latitude }}<br>Lon: {{ location.longitude }}');
+
+        markers['{{ location.name }}'] = marker;
+        {% endfor %}
+
+        const routesData = JSON.parse(document.getElementById('my-routes-data').textContent);
+        const myCargosData = JSON.parse(document.getElementById('my-cargos-data').textContent);
+        let currentPolylines = [];
+        let currentMarkers = [];
+
+        function filterRoutes() {
+            currentPolylines.forEach(layer => map.removeLayer(layer));
+            currentPolylines = [];
+            currentMarkers.forEach(layer => map.removeLayer(layer));
+            currentMarkers = [];
+
+            const selectedDate = document.getElementById('routeDate').value;
+            if (!selectedDate) {
+                alert('Lütfen bir tarih seçiniz');
+                return;
+            }
+
+            const filteredRoutes = (routesData || []).filter(route => route.date === selectedDate);
+
+            const routeCards = document.querySelectorAll('.route-card');
+            let hasVisibleRoutes = false;
+
+            routeCards.forEach(card => {
+                if (card.dataset.date === selectedDate) {
+                    card.style.display = 'block';
+                    hasVisibleRoutes = true;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (filteredRoutes.length === 0 && !hasVisibleRoutes) {
+                alert('Bu tarihte güzergah bulunamadı');
+                return;
+            }
+
+            filteredRoutes.forEach(route => {
+                if (route.path_data && route.path_data.length > 0) {
+                    const polyline = L.polyline(route.path_data, {
+                        color: route.color,
+                        weight: 5,
+                        opacity: 0.7
+                    }).addTo(map);
+                    currentPolylines.push(polyline);
+
+                    const startPoint = route.path_data[0];
+                    const marker = L.circleMarker(startPoint, {
+                        radius: 8,
+                        fillColor: route.color,
+                        color: "#fff",
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 1
+                    }).addTo(map).bindPopup(`<b>${route.vehicle_name}</b><br>Başlangıç`);
+                    currentMarkers.push(marker);
+                }
+            });
+
+            const userCargosForDate = (myCargosData || []).filter(cargo => cargo.date === selectedDate);
+            userCargosForDate.forEach(cargo => {
+                const cargoMarker = L.circleMarker([cargo.lat, cargo.lon], {
+                    radius: 8,
+                    fillColor: '#22c55e',
+                    color: '#fff',
+                    weight: 3,
+                    opacity: 1,
+                    fillOpacity: 1
+                }).addTo(map)
+                    .bindTooltip(`Sizin Durağınız - ${cargo.destination_name}`, { permanent: false, direction: 'top' });
+                currentMarkers.push(cargoMarker);
+            });
+
+            if (currentPolylines.length > 0) {
+                const group = new L.featureGroup(currentPolylines);
+                map.fitBounds(group.getBounds());
+            }
+        }
+
+        function focusLocation(lat, lon, name) {
+            map.setView([lat, lon], 14);
+            markers[name].openPopup();
+        }
+
+        function switchPanel(panel) {
+            const sendPanel = document.getElementById('sendCargoPanel');
+            const cargosPanel = document.getElementById('myCargosPanel');
+            const routePanel = document.getElementById('routePanel');
+            const buttons = document.querySelectorAll('.nav-btn');
+
+            sendPanel.style.display = 'none';
+            cargosPanel.style.display = 'none';
+            routePanel.style.display = 'none';
+
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            if (panel !== 'routePanel') {
+                currentPolylines.forEach(layer => map.removeLayer(layer));
+                currentPolylines = [];
+                currentMarkers.forEach(layer => map.removeLayer(layer));
+                currentMarkers = [];
+            }
+
+            switch (panel) {
+                case 'sendCargoPanel':
+                    sendPanel.style.display = 'block';
+                    buttons[0].classList.add('active');
+                    break;
+                case 'myCargosPanel':
+                    cargosPanel.style.display = 'block';
+                    buttons[1].classList.add('active');
+                    break;
+                case 'routePanel':
+                    routePanel.style.display = 'block';
+                    buttons[2].classList.add('active');
+                    break;
+            }
+        }
+    </script>
+</body>
+
+</html>

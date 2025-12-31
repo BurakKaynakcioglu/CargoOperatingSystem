@@ -1,0 +1,50 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'routePanel.css' %}">
+
+<div class="route-panel">
+    <h3>📍 Güzergah Planlama <span style="color: #999; font-size: 15px; font-weight: normal;"> -  {{ user.name }}</span></h3>
+
+    <div class="route-form-content">
+        <div class="form-group">
+            <label for="routeDate">Teslimat Tarihi</label>
+            <input type="date" id="routeDate" name="routeDate" required />
+        </div>
+        <button onclick="filterRoutes()" class="btn-primary">Güzergahları Göster</button>
+    </div>
+
+    {% if my_routes %}
+    <div class="route-results-container">
+        {% for route in my_routes %}
+        <div class="route-card" style="border-left-color: {{ route.color }}; display: none;"
+            data-date="{{ route.date }}">
+            <div class="route-card-title">{{ route.vehicle_name }}</div>
+            <div class="route-card-info">
+                <span>🛣️ {{ route.distance }} km</span>
+            </div>
+
+            <table class="route-steps-table">
+                <thead>
+                    <tr>
+                        <th>Hedef</th>
+                        <th class="text-right">Mesafe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for step in route.steps %}
+                    <tr>
+                        <td>
+                            {{ step.to_name }}
+                            {% if step.is_my_stop %}
+                            <span class="my-stop-badge">Sizin Durağınız</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right">{{ step.distance }} km</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>

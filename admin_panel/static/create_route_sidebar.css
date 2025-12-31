@@ -1,0 +1,213 @@
+
+.filter-container {
+    padding: 0 5px 10px 5px;
+}
+
+.filter-label {
+    display: block;
+    margin-bottom: 2px;
+    color: #555;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.filter-input-group {
+    display: flex;
+    gap: 5px;
+}
+
+.filter-date-input {
+    flex: 1;
+    padding: 4px 8px;
+    height: 22px;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+}
+
+.filter-date-input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.rental-section {
+    margin-top: 10px;
+}
+
+.rental-section .filter-label {
+    margin-bottom: 2px;
+}
+
+.rental-section .filter-input-group {
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.rental-section .filter-input-group:last-child {
+    margin-bottom: 0;
+}
+
+.rental-label {
+    font-size: 0.85em;
+    color: #666;
+    margin-right: 10px;
+    min-width: 85px;
+}
+
+.table-container {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 5px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.summary-table th,
+.summary-table td {
+    padding: 6px 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 1;
+}
+
+.summary-table tr:last-child td {
+    border-bottom: none;
+}
+
+.summary-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+.action-section {
+    margin-top: auto;
+    padding-top: 5px;
+}
+
+.action-section.with-margin {
+    margin-top: 10px;
+}
+
+.create-route-btn {
+    width: 100%;
+    padding: 8px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.create-route-btn:hover {
+    background-color: #218838;
+}
+
+.route-results-title {
+    margin-top: 5px;
+    margin-bottom: 0px;
+    color: #333;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.route-results-container {
+    overflow-y: auto;
+    margin-top: 10px;
+    padding-right: 5px;
+}
+
+.route-card {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    border-left-width: 5px;
+    border-left-style: solid;
+}
+
+.route-card-title {
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 0px;
+    color: #2c3e50;
+}
+
+.route-card-info {
+    font-size: 0.75em;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.route-card-info span {
+    display: inline-block;
+}
+
+.route-card-info .info-item {
+    margin-right: 10px;
+}
+
+.route-card-info .info-item-last {
+    margin-left: 10px;
+}
+
+.transported-users {
+    margin-top: 8px;
+    font-size: 0.8em;
+    color: #555;
+}
+
+.transported-users-list {
+    color: #666;
+}
+
+.route-steps-table {
+    width: 100%;
+    font-size: 0.8em;
+    border-collapse: collapse;
+}
+
+.route-steps-table thead {
+    background: #f8f9fa;
+    color: #495057;
+}
+
+.route-steps-table th {
+    padding: 5px;
+    text-align: left;
+}
+
+.route-steps-table th.text-right {
+    text-align: right;
+}
+
+.route-steps-table tr {
+    border-bottom: 1px solid #eee;
+}
+
+.route-steps-table td {
+    padding: 5px;
+}
+
+.route-steps-table td.text-right {
+    text-align: right;
+}

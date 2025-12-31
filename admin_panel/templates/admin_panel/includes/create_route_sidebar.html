@@ -1,0 +1,135 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'create_route_sidebar.css' %}">
+
+<div class="sidebar-container active">
+    <div class="info-panel">
+        <div class="header-container">
+            <h3>Rota Oluştur</h3>
+        </div>
+
+        <div class="filter-container">
+            <form id="route-form" method="get" action="{% url 'admin_panel:admin_map' %}">
+                <input type="hidden" name="panel" value="create_route">
+
+                <label for="route-date" class="filter-label">Tarih Filtresi:</label>
+                <div class="filter-input-group">
+                    <input type="date" id="route-date" name="date" value="{{ selected_date }}" class="filter-date-input"
+                        onchange="this.form.submit()">
+                </div>
+
+                <div class="rental-section">
+                    <label class="filter-label">Araç Ayarları:</label>
+
+                    <div class="filter-input-group">
+                        <label for="rental-capacity" class="rental-label">Kapasite
+                            (Kiralık Araç)</label>
+                        <input type="number" id="rental-capacity" name="rental_capacity" value="500"
+                            class="filter-date-input" style="width: 100%;">
+                    </div>
+
+                    <div class="filter-input-group">
+                        <label for="rental-cost" class="rental-label">Ücret
+                            (Kiralık Araç)</label>
+                        <input type="number" id="rental-cost" name="rental_cost" value="200" class="filter-date-input"
+                            style="width: 100%;">
+                    </div>
+
+                    <div class="filter-input-group">
+                        <label for="v1-capacity" class="rental-label">Kapasite (Araç 1)</label>
+                        <input type="number" id="v1-capacity" name="v1_capacity" value="500" class="filter-date-input"
+                            style="width: 100%;">
+                    </div>
+
+                    <div class="filter-input-group">
+                        <label for="v2-capacity" class="rental-label">Kapasite (Araç 2)</label>
+                        <input type="number" id="v2-capacity" name="v2_capacity" value="750" class="filter-date-input"
+                            style="width: 100%;">
+                    </div>
+
+                    <div class="filter-input-group">
+                        <label for="v3-capacity" class="rental-label">Kapasite (Araç 3)</label>
+                        <input type="number" id="v3-capacity" name="v3_capacity" value="1000" class="filter-date-input"
+                            style="width: 100%;">
+                    </div>
+                </div>
+
+                <div class="action-section with-margin">
+                    {% csrf_token %}
+                    <button type="submit" class="create-route-btn" formmethod="post"
+                        formaction="{% url 'admin_panel:admin_map' %}?panel=create_route&date={{ selected_date }}">
+                        Oluştur
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% if routes %}
+        <h4 class="route-results-title">Rota Detayları</h4>
+        <div class="route-results-container">
+            {% for route in routes %}
+            <div class="route-card" style="border-left-color: {{ route.color }};">
+                <div class="route-card-title">{{ route.vehicle }}</div>
+                <div class="route-card-info">
+                    <span class="info-item">📦 {{ route.total_weight }}kg / {{ route.capacity }}kg</span>
+                    <span class="info-item">🛣️ {{ route.distance }} km</span>
+                    <span class="info-item-last">💰 {{ route.cost }} TL</span>
+                </div>
+
+                <table class="route-steps-table">
+                    <thead>
+                        <tr>
+                            <th>Hedef</th>
+                            <th class="text-right">Mesafe</th>
+                            <th class="text-right">Alınan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for step in route.steps %}
+                        <tr>
+                            <td>{{ step.to_name }}</td>
+                            <td class="text-right">{{ step.distance }} km</td>
+                            <td class="text-right">
+                                {% if step.cargo_weight > 0 %}
+                                {{ step.cargo_weight }}kg
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                {% if route.transported_users %}
+                <div class="transported-users">
+                    <strong>Taşınan Müşteri ID'leri:</strong>
+                    <span class="transported-users-list">{{ route.transported_users|join:", " }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="table-container">
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Lokasyon</th>
+                        <th>Kargo Sayısı</th>
+                        <th>Ağırlık (kg)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for location in locations %}
+                    <tr>
+                        <td>{{ location.name }}</td>
+                        <td>{{ location.cargo_count }}</td>
+                        <td>{{ location.total_weight|default_if_none:"0" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,150 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'sendCargoPanel.css' %}">
+
+<div class="cargo-panel">
+    <h3>🚚 Kargo Gönderimi <span style="color: #999; font-size: 15px; font-weight: normal;"> -  {{ user.name }}</span></h3>
+
+    <div class="cargo-form-content">
+        {% if success_msg %}
+        <div class="alert success auto-dismiss">
+            {{ success_msg }}
+        </div>
+        {% endif %}
+
+        {% if error_msg %}
+        <div class="alert error auto-dismiss">
+            {{ error_msg }}
+        </div>
+        {% endif %}
+
+        <form id="cargoForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" id="cargosInput" name="cargos" />
+
+            <div class="form-group">
+                <label for="deliveryDate">Teslimat Tarihi</label>
+                <input type="date" id="deliveryDate" name="deliveryDate" required />
+            </div>
+
+            <div class="form-group">
+                <label for="station">Gönderim İstasyonu</label>
+                <select id="station" name="station" required>
+                    <option value="">İstasyon Seçiniz</option>
+                    {% for location in locations %}
+                    {% if location.name != "Kocaeli Üniversitesi" %}
+                    <option value="{{ location.id }}">{{ location.name }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Kargo Ekle</label>
+                <div class="add-cargo-row">
+                    <input type="number" id="cargoWeight" placeholder="Ağırlık (kg)" step="1" min="1" />
+                    <button type="button" class="btn btn-add" onclick="addCargo()">+</button>
+                </div>
+            </div>
+
+            <div class="cargo-list-box" id="cargoList">
+                <div class="empty-msg">Kargo eklenmedi</div>
+            </div>
+
+            <div class="summary-box" id="summaryBox" style="display: none;">
+                <p><strong>Toplam:</strong> <span id="totalCargo">0</span> kargo - <span id="totalWeight">0</span> kg</p>
+            </div>
+
+            <button type="submit" class="btn btn-submit">Gönderimi Oluştur</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let cargos = [];
+    const trashIconUrl = "{% static 'icons/trash.svg' %}";
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.auto-dismiss');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, 3000);
+        });
+    });
+
+    function addCargo() {
+        const weight = parseInt(document.getElementById('cargoWeight').value);
+        const stationSelect = document.getElementById('station');
+        const destination = stationSelect.options[stationSelect.selectedIndex].text;
+        const destination_id = stationSelect.value;
+
+        if (!stationSelect.value) {
+            alert('Lütfen önce istasyon seçiniz!');
+            return;
+        }
+
+        if (!weight || weight <= 0 || !Number.isInteger(weight)) {
+            alert('Lütfen geçerli bir tam sayı ağırlık giriniz!');
+            return;
+        }
+
+        cargos.push({ weight, destination, destination_id });
+
+        document.getElementById('cargoWeight').value = '';
+
+        updateCargoList();
+    }
+
+    function removeCargo(index) {
+        cargos.splice(index, 1);
+        updateCargoList();
+    }
+
+    function updateCargoList() {
+        const cargoListDiv = document.getElementById('cargoList');
+        const summaryBox = document.getElementById('summaryBox');
+        const stationSelect = document.getElementById('station');
+        const selectedStation = stationSelect.options[stationSelect.selectedIndex].text;
+
+        if (cargos.length === 0) {
+            cargoListDiv.innerHTML = '<div class="empty-msg">Kargo eklenmedi</div>';
+            summaryBox.style.display = 'none';
+            return;
+        }
+
+        let html = '';
+        let totalWeight = 0;
+
+        cargos.forEach((cargo, index) => {
+            totalWeight += cargo.weight;
+            html += `
+                <div class="cargo-item-box">
+                    <div>
+                        <strong>${cargo.weight} kg</strong> → ${cargo.destination}
+                    </div>
+                    <button class="remove-btn" onclick="removeCargo(${index})" type="button">
+                        <img src="${trashIconUrl}" alt="Sil" width="16" height="16">
+                    </button>
+                </div>
+            `;
+        });
+
+        cargoListDiv.innerHTML = html;
+
+        document.getElementById('totalCargo').textContent = cargos.length;
+        document.getElementById('totalWeight').textContent = totalWeight;
+        summaryBox.style.display = 'block';
+    }
+
+    document.getElementById('cargoForm').addEventListener('submit', function(e) {
+        if (cargos.length === 0) {
+            e.preventDefault();
+            alert('Lütfen en az bir kargo ekleyiniz!');
+            return false;
+        }
+
+        document.getElementById('cargosInput').value = JSON.stringify(cargos);
+    });
+</script>

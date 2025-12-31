@@ -1,0 +1,35 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'myCargosPanel.css' %}">
+
+<div class="cargo-panel" style="display: flex; flex-direction: column;">
+    <h3 style="flex-shrink: 0;">📦 Kargolarım <span style="color: #999; font-size: 15px; font-weight: normal;"> -  {{ user.name }}</span></h3>
+
+    <div class="my-cargos-list">
+        {% if my_cargos %}
+        {% for cargo in my_cargos %}
+        <div class="cargo-item-card">
+            <div class="cargo-header">
+                <strong>{{ cargo.destination.name }}</strong>
+                <span class="cargo-date">{{ cargo.delivery_date|date:"d M Y" }}</span>
+            </div>
+            <div class="cargo-details">
+                <div>Ağırlık: <strong>{{ cargo.weight }} kg</strong></div>
+
+                <form action="" method="POST" style="margin: 0;"
+                    onsubmit="return confirm('Bu kargoyu silmek istediğinize emin misiniz?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="delete_id" value="{{ cargo.id }}">
+                    <button type="submit" class="btn-delete-cargo" title="Sil">
+                        <img src="{% static 'icons/trash.svg' %}" alt="Sil" width="16" height="16">
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="my-cargos-empty">
+            Henüz gönderilmiş kargonuz bulunmamaktadır.
+        </div>
+        {% endif %}
+    </div>
+</div>
